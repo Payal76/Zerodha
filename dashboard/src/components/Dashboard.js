@@ -1,4 +1,8 @@
-import React from "react";
+//import React from "react";
+//update
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { Route, Routes } from "react-router-dom";
 
 import Apps from "./Apps";
@@ -12,6 +16,21 @@ import WatchList from "./WatchList";
 import { GeneralContextProvider } from "./GeneralContext";
 
 const Dashboard = () => {
+//update
+const navigate = useNavigate();
+  const [authorized, setAuthorized] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/verify-token", { credentials: "include" })
+      .then((res) => {
+        if (res.ok) setAuthorized(true);
+        else navigate("/login");
+      })
+      .catch(() => navigate("/login"));
+  }, [navigate]);
+
+  if (!authorized) return null; // or a loading spinner
+
   return (
     <div className="dashboard-container">
       <GeneralContextProvider>

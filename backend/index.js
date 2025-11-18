@@ -1,22 +1,119 @@
 require("dotenv").config();
-
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
-const { HoldingsModel } = require("./model/HoldingsModel");
+const User = require("./model/User"); // create this model
 
-const { PositionsModel } = require("./model/PositionsModel");
-const { OrdersModel } = require("./model/OrdersModel");
-
+const app = express();
 const PORT = process.env.PORT || 3002;
 const uri = process.env.MONGO_URL;
 
-const app = express();
-
-app.use(cors());
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(bodyParser.json());
+app.use(cookieParser());
+
+// JWT middleware
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch {
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+// Signup
+app.post("/api/signup", async (req, res) => {
+  const { email, password } = req.body;
+  const hashed = await bcrypt.hash(password, 10);
+  await User.create({ email, password: hashed });
+  res.status(201).json({ message: "Signup successful" });
+});
+
+// Login
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+  res.cookie("token", token, { httpOnly: true });
+  res.status(200).json({ message: "Login successful" });
+});
+
+// Token check
+app.get("/api/verify-token", (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ message: "No token" });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.status(200).json({ user: decoded });
+  } catch {
+    res.status(401).json({ message: "Invalid token" });
+  }
+});
+
+mongoose.connect(uri).then(() => {
+  app.listen(PORT, () => {
+    console.log("Server running on port", PORT);
+  });
+});
+// require("dotenv").config();
+
+// const express = require("express");
+// const mongoose = require("mongoose");
+// const bodyParser = require("body-parser");
+// const cors = require("cors");
+
+// const { HoldingsModel } = require("./model/HoldingsModel");
+
+// const { PositionsModel } = require("./model/PositionsModel");
+// const { OrdersModel } = require("./model/OrdersModel");
+
+// const PORT = process.env.PORT || 3002;
+// const uri = process.env.MONGO_URL;
+
+// const app = express();
+
+// app.use(cors());
+// app.use(bodyParser.json());
+// app.get("/allHoldings", async (req, res) => {
+//   let allHoldings = await HoldingsModel.find({});
+//   res.json(allHoldings);
+// });
+
+// app.get("/allPositions", async (req, res) => {
+//   let allPositions = await PositionsModel.find({});
+//   res.json(allPositions);
+// });
+
+// app.post("/newOrder", async (req, res) => {
+//   let newOrder = new OrdersModel({
+//     name: req.body.name,
+//     qty: req.body.qty,
+//     price: req.body.price,
+//     mode: req.body.mode,
+//   });
+
+//   newOrder.save();
+
+//   res.send("Order saved!");
+// });
+
+// app.listen(PORT, () => {
+//   console.log("App started!");
+//   mongoose.connect(uri);
+//   console.log("DB started!");
+// });
 
 // app.get("/addHoldings", async (req, res) => {
 //   let tempHoldings = [
@@ -187,31 +284,3 @@ app.use(bodyParser.json());
 //   res.send("Done!");
 // });
 
-app.get("/allHoldings", async (req, res) => {
-  let allHoldings = await HoldingsModel.find({});
-  res.json(allHoldings);
-});
-
-app.get("/allPositions", async (req, res) => {
-  let allPositions = await PositionsModel.find({});
-  res.json(allPositions);
-});
-
-app.post("/newOrder", async (req, res) => {
-  let newOrder = new OrdersModel({
-    name: req.body.name,
-    qty: req.body.qty,
-    price: req.body.price,
-    mode: req.body.mode,
-  });
-
-  newOrder.save();
-
-  res.send("Order saved!");
-});
-
-app.listen(PORT, () => {
-  console.log("App started!");
-  mongoose.connect(uri);
-  console.log("DB started!");
-});

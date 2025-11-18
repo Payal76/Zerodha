@@ -1,0 +1,31 @@
+
+.login-container {
+  width: 350px;
+  margin: 80px auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-container input {
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.login-container button {
+  padding: 12px;
+  background: #008cff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.msg {
+  margin-top: 10px;
+  color: red;
+}
+
+.link {
+  color: blue;
+  margin-left: 5px;
+  cursor: pointer;
+}

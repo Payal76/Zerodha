@@ -1,36 +1,35 @@
-
 import React, { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-import "./signup.css";
+import "./login.css";
 
-export default function Signup() {
+export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleSignup = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      await axios.post("http://localhost:3002/api/signup", {
-        email,
-        password,
-      });
+      await axios.post(
+        "http://localhost:3002/api/login",
+        { email, password },
+        { withCredentials: true }
+      );
 
-      setMessage("Signup successful! Redirecting to login...");
-      setTimeout(() => navigate("/login"), 1500);
+      navigate("/dashboard"); // redirect to dashboard
     } catch (error) {
-      setMessage("Signup failed. Try again.");
+      setMessage("Invalid Credentials or Server Not Responding");
     }
   };
 
   return (
-    <div className="signup-container">
-      <h2>Create Account</h2>
+    <div className="login-container">
+      <h2>Login</h2>
 
-      <form onSubmit={handleSignup}>
+      <form onSubmit={handleLogin}>
         <input
           type="email"
           placeholder="Enter Email"
@@ -47,15 +46,19 @@ export default function Signup() {
           required
         />
 
-        <button type="submit">Signup</button>
+        <button type="submit">Login</button>
       </form>
 
       <p className="msg">{message}</p>
 
       <p>
-        Already have an account?
-        <Link to="/login" className="link"> Login</Link>
+        Don't have an account?
+        <Link to="/signup" className="link"> Signup</Link>
       </p>
     </div>
   );
 }
+
+
+
+
